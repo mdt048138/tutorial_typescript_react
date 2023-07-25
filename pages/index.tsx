@@ -1,59 +1,55 @@
-import { NextPage } from "next";
+import { GetServerSideProps, NextPage } from "next";
 import { useEffect, useState } from "react";
+import styles from "./index.module.css";
 
-const IndexPage: NextPage = () => {
-    const [imageUrl, setImageUrl] = useState("");
+type Props = {
+    initialImageUrl: string;
+};
+
+const IndexPage: NextPage<Props> = ({initialImageUrl}) => {
+    const [imageUrl, setImageUrl] = useState(initialImageUrl);
     const [loading, setLoading]   = useState(true);
-    const [width, setWidth]   = useState(640);
-    const [height, setHeight] = useState(480);
-    const [image, setImage]   = useState({url:"", width:640, height:480});
 
-    useEffect(()=>{
-        fetchImage().then((newImage)=>{
-            setImageUrl(newImage.url);
-            setLoading(false);
-            let [w,h] = resize(newImage.width, newImage.height);
-            setWidth(w);
-            setHeight(h);
-            setImage({url:newImage.url, width:w, height:h});
-        });
-    }, []);
+    // useEffect(()=>{
+    //     fetchImage().then((newImage)=>{
+    //         setImageUrl(newImage.url);
+    //         setLoading(false);
+    //     });
+    // }, []);
 
     const handleClick = async () => {
         setLoading(true);
         const newImage = await fetchImage();
         setImageUrl(newImage.url);
         setLoading(false);
-        let [w,h] = resize(newImage.width, newImage.height);
-        setWidth(w);
-        setHeight(h);
-        setImage({url:newImage.url, width:w, height:h});
     };
 
     return (
-        <div>
-            <button onClick={handleClick}>Seee other cat.</button>
-            {/* <div>{loading || <img src={imageUrl} width={width} height={height}/>}</div> */}
-            <div>{loading || <img src={image.url} width={image.width} height={image.height}/>}</div>
+        <div className={styles.page}>
+            <button onClick={handleClick} className={styles.button}>Seee other cat.</button>
+            <div className={styles.frame}>
+                <div>{loading || <img src={imageUrl} className={styles.img}/>}</div>
+            </div>
+            {/* <div>{loading || <img src={image.url} width={image.width} height={image.height}/>}</div> */}
         </div>
     );
 };
 
 export default IndexPage;
 
-function resize(width:number, height:number){
-    let aspect = width/height;
-    if(aspect > 640/480){
-        return [640, Math.round(height*640/width)];
-    } else {
-        return [Math.round(width*480/height), 480];
-    }
-}
+export const getServerSideProps: GetServerSideProps<Props> = async()=>{
+    const image = await fetchImage();
+    return {
+        props: {
+            initialImageUrl: image.url,
+        },
+    };
+};
 
 type Image = {
     url: string;
-    width: number;
-    height: number;
+    // width: number;
+    // height: number;
 };
 
 const fetchImage = async():Promise<Image> => {
